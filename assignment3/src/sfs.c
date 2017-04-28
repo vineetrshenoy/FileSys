@@ -502,9 +502,7 @@ void *sfs_init(struct fuse_conn_info *conn)
       block.list[i] = node;
 
     }
-    int jjj = NAME_MAX;
-    log_msg("\n The value of name max is %d", jjj);
-
+    
     fstat(diskfile, &s); //get file information
     get_metadata_info(s.st_size, &info); //gets all the metadata info
 
@@ -540,6 +538,12 @@ void *sfs_init(struct fuse_conn_info *conn)
     log_conn(conn);
     log_fuse_context(fuse_get_context());
 
+    log_msg("\n # dataregion_bitmap_blocks = %d", info.dataregion_bitmap_blocks);
+    log_msg("\n # dataregion_bitmap_start = %d", info.dataregion_bitmap_start);
+    log_msg("\n # inode_bitmap_blocks = %d", info.inode_bitmap_blocks);
+    log_msg("\n # inodeblocs = %d", info.inode_blocks);
+    log_msg("\n inode blocks start %d", info.inode_blocks_start);
+    log_msg("\n dataregion_blocks = %d", info.dataregion_blocks);
     //sfs_create("/.Trash", S_IRWXU, NULL);
 
     return SFS_DATA;
