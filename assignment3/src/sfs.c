@@ -304,9 +304,9 @@ int findInode(const char *path) {
    super_block sblock;
   block_read(0, &sblock);
   int dataRegionOffset = sblock.list[0].dataregion_blocks_start;
-  filepath_block rblock;
-  block_read(dataRegionOffset, &rblock);
-  int inodeNum = rblock.inode;
+  //filepath_block rblock;
+  //block_read(dataRegionOffset, &rblock);
+  int inodeNum = 0;
   // int inodeBlock = inodeNum/8;
   // if (inodeNum%8 != 0) {
   //   inodeBlock++;
@@ -371,9 +371,9 @@ int findFilepathBlock(const char *path) {
   super_block sblock;
   block_read(0, &sblock);
   int dataRegionOffset = sblock.list[0].dataregion_blocks_start;
-  filepath_block rblock;
-  block_read(dataRegionOffset, &rblock);
-  int inodeNum = rblock.inode;
+  //filepath_block rblock;
+  //block_read(dataRegionOffset, &rblock);
+  int inodeNum = 0;
   // int inodeBlock = inodeNum/8;
   // if (inodeNum%8 != 0) {
   //   inodeBlock++;
@@ -528,7 +528,7 @@ void *sfs_init(struct fuse_conn_info *conn)
       count++;
     }
 
-    
+    set_inode_status(0,1); //setting the first inode as allocated
 
     fprintf(stderr, "in bb-init\n");
     log_msg("\nsfs_init()\n");
@@ -716,6 +716,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
           for (j = 0; j < 12; j++) {
             if (previousNode.direct_ptrs[j] == 0) {
               previousNode.direct_ptrs[j] = i;
+              set_inode(previousInodeNum, previousNode);
               entered = 1;
               break;
             }
@@ -849,7 +850,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
     int unreadSize = size;
     int i;
     for (i = 0; i < numOfBlocksNeeded; i++) {
-      block_read(node.direct_ptrs[readBlockNum + i], &buffer);
+      block_read(node.direct_ptrs[readBlockNum + i] + info.dataregion_blocks_start, &buffer);
       if (size <= BLOCK_SIZE - readOffset) {
         int j;
         for (j = readOffset; j < readOffset + unreadSize; j++) {
@@ -911,6 +912,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
       while (currentNumOfBlocks != writeBlockNum) {
         currentNumOfBlocks++;
         node.direct_ptrs[currentNumOfBlocks] = find_free_datablock();
+        set_inode(inodeNum, node);
         set_dataregion_status(node.direct_ptrs[currentNumOfBlocks], 1);
       }
     }
@@ -922,20 +924,23 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
       for (i = 0; i < numOfBlocksNeeded; i++) {
         currentNumOfBlocks++;
         node.direct_ptrs[currentNumOfBlocks] = find_free_datablock();
+        set_inode(inodeNum, node);
         set_dataregion_status(node.direct_ptrs[currentNumOfBlocks], 1);
       }
     }
     node.size = (currentNumOfBlocks - 1)*BLOCK_SIZE;
     if (size%BLOCK_SIZE != 0) {
       node.size += size%BLOCK_SIZE;
+      set_inode(inodeNum, node);
     }
     else {
       node.size += BLOCK_SIZE;
+      set_inode(inodeNum, node);
     }
     char buffer[BLOCK_SIZE];
     int unwrittenSize = size;
     for (i = 0; i < numOfBlocksNeeded; i++) {
-      block_read(node.direct_ptrs[writeBlockNum + i], &buffer);
+      block_read(node.direct_ptrs[writeBlockNum + i] + info.dataregion_blocks_start, &buffer);
       if (size <= BLOCK_SIZE - writeOffset) {
         int j;
         for (j = writeOffset; j < writeOffset + unwrittenSize; j++) {
@@ -950,7 +955,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
         }
         unwrittenSize -= (BLOCK_SIZE - writeOffset);
       }
-      block_write(node.direct_ptrs[writeBlockNum + i], &buffer);
+      block_write(node.direct_ptrs[writeBlockNum + i] + info.dataregion_blocks_start, &buffer);
     }
     retstat = size;
     
@@ -1031,7 +1036,7 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
     directory_block dblock;
     int fillerReturn;
     while (pathInode.direct_ptrs[i]) {
-      block_read(pathInode.direct_ptrs[i], &dblock);
+      block_read(pathInode.direct_ptrs[i] + info.dataregion_blocks_start, &dblock);
       fillerReturn = filler(buf, dblock.list[0].d_name, NULL, sizeof(struct dirent));
       if (fillerReturn != 0) {
         return retstat;
