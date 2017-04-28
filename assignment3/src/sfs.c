@@ -666,7 +666,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
  */
 int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+     int retstat = 0;
     log_msg("\nsfs_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
       path, mode, fi);
     
@@ -675,6 +675,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     int totalInodes = sblock.list[0].total_inodes;
     int totalDatablocks = sblock.list[0].dataregion_blocks;
     int inodeNum = findInode(path);
+    char slash = 47;
     // file does not exist
     if (inodeNum == -1) {
       int i, inodeStatus, datablockStatus;
@@ -707,7 +708,40 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
           fblock.inode = inodeNum;
           block_write(datablockOffset + i, &fblock);
           set_dataregion_status(i, 1);
-          break;
+          // This is where my reverse parsing starts
+          j = 0;
+          int previousDirectoryCounter = 0;
+          char * previousDirectory;
+          previousDirectory[previousDirectoryCounter] = slash;
+          previousDirectoryCounter++;
+          while (fldrs[j]) {
+            int k = 0;
+            while (fldrs[j][k]) {
+              previousDirectory[previousDirectoryCounter] = fldrs[j][k];
+              previousDirectoryCounter++;
+              k++;
+            }
+            previousDirectory[previousDirectoryCounter] = slash;
+            previousDirectoryCounter++;
+            j++;
+          }
+          // This is where my reverse parsing ends
+          int previousInodeNum = findInode(previousDirectory);
+          inode previousNode = get_inode(previousInodeNum);
+          int entered = 0;
+          for (j = 0; j < 12; j++) {
+            if (previousNode.direct_ptrs[j] == 0) {
+              previousNode.direct_ptrs[j] = i;
+              entered = 1;
+              break;
+            }
+          }
+          if (entered != 1) {
+            // do indirect pointer stuff
+          }
+          else {
+            break;
+          }
         }
       }
     }
