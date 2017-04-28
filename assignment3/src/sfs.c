@@ -307,12 +307,27 @@ int findInode(const char *path) {
   filepath_block rblock;
   block_read(dataRegionOffset, &rblock);
   int inodeNum = rblock.inode;
+  inodeNum = 0;
   // int inodeBlock = inodeNum/8;
   // if (inodeNum%8 != 0) {
   //   inodeBlock++;
   // }
   // int inodeOffset = inodeNum - (inodeBlock - 1)*8;
+  int p = 0;
+  char lastChar;
+  while(path[p]) {
+    lastChar = path[p];
+    p++;
+  }
+  int isDir;
+  if (lastChar == '/') {
+    isDir = 1;
+  }
+  else {
+    isDir = 0;
+  }
   int numOfDirs = get_num_dirs(path);
+  log_msg("\n numOfDirs = %d", numOfDirs);
   char ** fldrs = parsePath(filepath);
   inode_block iblock;
   filepath_block fblock;
@@ -326,6 +341,9 @@ int findInode(const char *path) {
     gotem = 0;
     // check each direct_ptr in inode until the correct folder is found
     for (j = 0; j < 12; j++) {
+      if (node.direct_ptrs[j] == 0) {
+        break;
+      }
       block_read(node.direct_ptrs[j], &fblock);
       int fcheck = 0;
       int l = 0;
@@ -342,7 +360,7 @@ int findInode(const char *path) {
     }
     if (gotem == 1) {
       inodeNum = fblock.inode;
-      if (i == numOfDirs) {
+      if (i == numOfDirs - 1) {
         break;
       }
     }
