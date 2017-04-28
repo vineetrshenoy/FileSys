@@ -728,7 +728,7 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
     log_msg("\n The inode number is %d", inodeNum);
     if (inodeNum == -1) {
       //fi->flags = fi->flags | O_CREAT;
-      sfs_create(path, S_IRWXU, fi);
+      sfs_create(path, S_IFREG, fi);
       return ENOENT;
     }
     
