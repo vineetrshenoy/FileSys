@@ -546,6 +546,16 @@ void *sfs_init(struct fuse_conn_info *conn)
     log_msg("\n dataregion_blocks = %d", info.dataregion_blocks);
     //sfs_create("/.Trash", S_IRWXU, NULL);
 
+    struct fuse_file_info fi;
+    sfs_opendir("/", &fi);
+    struct stat statbuf;
+    sfs_getattr("/.xdg-volume-info", &statbuf);
+    char buff[BLOCK_SIZE];
+    fuse_fill_dir_t filler;
+    sfs_readdir("/", &buff, filler, 0, &fi);
+    sfs_releasedir("/", &fi);
+
+    
     return SFS_DATA;
 }
 
