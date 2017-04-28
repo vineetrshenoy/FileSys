@@ -307,11 +307,11 @@ int findInode(const char *path) {
   filepath_block rblock;
   block_read(dataRegionOffset, &rblock);
   int inodeNum = rblock.inode;
-  int inodeBlock = inodeNum/8;
-  if (inodeNum%8 != 0) {
-    inodeBlock++;
-  }
-  int inodeOffset = inodeNum - (inodeBlock - 1)*8;
+  // int inodeBlock = inodeNum/8;
+  // if (inodeNum%8 != 0) {
+  //   inodeBlock++;
+  // }
+  // int inodeOffset = inodeNum - (inodeBlock - 1)*8;
   int numOfDirs = get_num_dirs(path);
   char ** fldrs = parsePath(filepath);
   inode_block iblock;
@@ -320,8 +320,9 @@ int findInode(const char *path) {
   inode node;
   // go through each inode of each folder in the path to find the inode for the filepath
   for (i = 0; i < numOfDirs; i++) {
-    block_read(inodeBlock, &iblock);
-    node = iblock.list[inodeOffset];
+    // block_read(inodeBlock, &iblock);
+    // node = iblock.list[inodeOffset];
+    node = get_inode(inodeNum);
     gotem = 0;
     // check each direct_ptr in inode until the correct folder is found
     for (j = 0; j < 12; j++) {
@@ -341,14 +342,9 @@ int findInode(const char *path) {
     }
     if (gotem == 1) {
       inodeNum = fblock.inode;
-      if (i == numOfDirs - 1) {
+      if (i == numOfDirs) {
         break;
       }
-      inodeBlock = inodeNum/8;
-      if (inodeNum%8 != 0) {
-        inodeBlock++;
-      }
-      inodeOffset = inodeNum - (inodeBlock - 1)*8;
     }
     else {
       // do indirect ptr stuff
@@ -555,7 +551,7 @@ void *sfs_init(struct fuse_conn_info *conn)
     sfs_readdir("/", &buff, filler, 0, &fi);
     sfs_releasedir("/", &fi);
 
-    
+
     return SFS_DATA;
 }
 
