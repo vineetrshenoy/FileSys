@@ -674,6 +674,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
           int j = 0;
           while (fldrs[numOfDirs - 1][j]) {
             fblock.filepath[j] = fldrs[numOfDirs - 1][j];
+            j++;
           }
           fblock.inode = inodeNum;
           block_write(datablockOffset + i, &fblock);
@@ -987,6 +988,7 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
       if (fillerReturn != 0) {
         return retstat;
       }
+      i++;
     }
     
     return retstat;
