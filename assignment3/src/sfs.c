@@ -677,7 +677,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
       // find available datablock
       for (i = 0; i < totalDatablocks; i++) {
         datablockStatus = check_dataregion_status(i);
-        if(!datablockStatus) {
+        if(datablockStatus == 0) {
           int datablockOffset = sblock.list[0].dataregion_blocks_start + i;
           int numOfDirs = get_num_dirs(path);
           char ** fldrs = parsePath(path);
@@ -688,6 +688,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
           }
           fblock.inode = inodeNum;
           block_write(datablockOffset + i, &fblock);
+          set_dataregion_status(i, 1);
           break;
         }
       }
