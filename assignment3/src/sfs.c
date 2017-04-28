@@ -698,7 +698,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
           char * previousDirectory;
           previousDirectory[previousDirectoryCounter] = slash;
           previousDirectoryCounter++;
-          while (fldrs[j]) {
+          while (fldrs[j] && j < numOfDirs - 1) {
             int k = 0;
             while (fldrs[j][k]) {
               previousDirectory[previousDirectoryCounter] = fldrs[j][k];
